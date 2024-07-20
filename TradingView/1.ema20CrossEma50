@@ -1,0 +1,23 @@
+//@version = 5
+strategy("Simple moving average strategy", overlay = true) 
+
+ema20 = ta.ema(close, 20)
+ema50 = ta.ema(close, 50)
+
+long = ema20 > ema50
+short = ema20 < ema50
+
+plot(ema20, title = "EMA20", color = #00ffaa, linewidth = 3)
+plot(ema50, title = "EMA50", color = #ffc1cc, linewidth = 3)
+
+start = timestamp(2024, 1, 1, 0, 0)
+end = timestamp(2024, 12, 31, 0, 0)
+
+if time >= start and time <= end
+    if (long)
+        strategy.entry("Long", strategy.long, 1000)
+    if (short)
+        strategy.entry("Short", strategy.short, 1000)
+
+    strategy.close("Long", when=short)
+    strategy.close("Short", when=long)
