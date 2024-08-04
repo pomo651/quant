@@ -1,0 +1,28 @@
+//@version=5
+strategy(title="Tilted RSI Strategy", overlay = false, initial_capital = 1000)
+
+// Youtuber: Financial Programming with Ritvik, CFA
+// Reference: https://www.youtube.com/watch?v=gSJen0SfFc0&list=PLxvRLWqiBMjrRz_LUBCHJk-xZeAjavtCN
+
+rsiLengthInput = input.int(14, minval=1, title="RSI Length", group="RSI Settings")
+rsiSourceInput = input.source(close, "Source", group="RSI Settings")
+up = ta.rma(math.max(ta.change(rsiSourceInput), 0), rsiLengthInput)
+down = ta.rma(-math.min(ta.change(rsiSourceInput), 0), rsiLengthInput)
+rsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down))
+rsiPlot = plot(rsi, "RSI", color=#7E57C2)
+
+barCandle = input.int(30, 'Candles to go back')
+strength = input.float(0.01, 'Trend Strength')
+
+buy_condition = (rsi[barCandle] < rsi) and (high[barCandle] > high * (1 + strength)) and (rsi < 55)
+sell_condition = (rsi[barCandle] > rsi) and (high[barCandle] < high * (1 + strength)) and (rsi > 55)
+
+if buy_condition
+	strategy.entry('Long', strategy.long, comment = 'Long')
+if sell_condition
+	strategy.entry('Short', strategy.short, comment = 'Short')
+
+if strategy.position_size > 0
+	strategy.exit('Long Exit', from_entry = 'Long', stop = strategy.opentrades.entry_price(0) * (0.92))
+if strategy.position_size < 0
+	strategy.exit('Short Exit', from_entry = 'Short', stop = strategy.opentrades.entry_price(0) * (1.10))
