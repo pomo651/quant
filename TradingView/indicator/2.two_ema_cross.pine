@@ -1,0 +1,43 @@
+// @version = 5
+indicator("jj.com", overlay = true)
+
+// Get user input
+emaLength1 = input.int(title = 'EMA #1 length', defval = 50)
+emaLength2 = input.int(title = 'EMA #2 length', defval = 100)
+
+// Get MAs
+ema1 = ta.ema(close, emaLength1)
+ema2 = ta.ema(close, emaLength2)
+
+// Draw MAs
+plot(ema1, color = color.blue, title = 'EMA 1')
+plot(ema2, color = color.red, title = 'EMA 2')
+
+// Detect crosses
+bool cross = ta.cross(ema1, ema2)
+float crossPrice = cross ? close : na 
+
+
+// Draw label to display cross price
+if cross
+    highestEmaPrice = math.max(ema1, ema2)
+    label.new(bar_index, highestEmaPrice, "CrossPrice= " + str.tostring(crossPrice), color = color.white)
+
+
+// Check if the crossover price is the highest close over the past 10 bars 
+bool highestPrice = cross 
+for i = 1 to 10
+	if crossPrice <= close[i]
+    	highestPrice := false 
+    	break 
+
+// Check if the crossover price is the lowest close over the past 10 bars 
+bool lowestPrice = cross 
+for i = 1 to 10
+	if crossPrice >= low[i]
+    	lowestPrice := false 
+    	break 
+
+// Flag the bar if it is a high / low close 
+bgcolor(highestPrice ? color.new(color.green, 50) : na)
+bgcolor(lowestPrice ? color.new(color.red, 50) : na)

@@ -1,0 +1,25 @@
+// @version = 5
+indicator("jj.com", overlay = true)
+
+// Get user input
+emaLength1 = input.int(title = 'EMA #1 length', defval = 50)
+emaLength2 = input.int(title = 'EMA #2 length', defval = 100)
+
+// Get MAs
+ema1 = ta.ema(close, emaLength1)
+ema2 = ta.ema(close, emaLength2)
+
+// Draw MAs
+plot(ema1, color = color.blue, title = 'EMA 1')
+plot(ema2, color = color.red, title = 'EMA 2')
+
+// Detect crosses
+bool cross = ta.cross(ema1, ema2)
+bgcolor(cross ? color.green : na)
+
+float crossPrice = cross ? close : na
+
+// Draw label to display cross price
+if cross
+  label crossLabel = label.new(bar_index, high, "CrossPrice= " + str.tostring(crossPrice))
+  
