@@ -1,5 +1,7 @@
+// Source: https://www.youtube.com/watch?v=iewY42ls134&list=PLSP_1DBafH-Hw_0qWcC4VuInIy6eIs69p&index=6
+
 // @version = 5
-indicator("jj.com", overlay = true)
+strategy("jj.com", overlay = true, default_qty_type = strategy.percent_of_equity, default_qty_value = 100)
 
 // Get user input
 emaLength1 = input.int(title = 'EMA #1 length', defval = 50)
@@ -14,12 +16,40 @@ plot(ema1, color = color.blue, title = 'EMA 1')
 plot(ema2, color = color.red, title = 'EMA 2')
 
 // Detect crosses
-bool cross = ta.cross(ema1, ema2)
-bgcolor(cross ? color.green : na)
+bool crossOver = ta.cross(ema1, ema2)
+bool crossUnder = ta.crossunder(ema1, ema2)
+bool cross = crossOver or crossUnder
+float crossPrice = cross ? close : na 
 
-float crossPrice = cross ? close : na
+// Check if the crossover price is the highest close over the past 10 bars 
+bool highestPrice = cross 
+for i = 1 to 10
+	if crossPrice <= close[i]
+    	highestPrice := false 
+    	break 
 
-// Draw label to display cross price
+// Check if the crossover price is the lowest close over the past 10 bars 
+bool lowestPrice = cross 
+for i = 1 to 10
+	if crossPrice >= low[i]
+    	lowestPrice := false 
+    	break 
+
+// Flag the bar if it is a high / low close 
+bgcolor(highestPrice ? color.new(color.green, 50) : na)
+bgcolor(lowestPrice ? color.new(color.red, 50) : na)
+
+// Display crossover price
 if cross
-  label crossLabel = label.new(bar_index, high, "CrossPrice= " + str.tostring(crossPrice))
-  
+    highestEmaPrice = math.max(ema1, ema2)
+    label.new(bar_index, highestEmaPrice, "CrossPrice= " + str.tostring(crossPrice), color = color.white)
+	if highestPrice and strategy.position_size == 0
+		strategy.entry(id="Buy", direction = strategy.long)
+	if lowestPrice and strategy.position_size == 0
+		strategy.entry(id='Sell', direction = strategy.short)
+
+// Exit trades when short-term EMA is breached 
+if strategy.position_size > 0 and close < ema1
+	strategy.close('Buy')
+if strategy.position_size < 0
+	strategy.close('Sell')
